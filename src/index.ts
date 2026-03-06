@@ -24,7 +24,7 @@ async function runBlu(args: string[]): Promise<{ stdout: string; stderr: string 
   }
 }
 
-const server = new Server(
+export const server = new Server(
   {
     name: "blu-mcp",
     version: "1.0.0",
@@ -229,8 +229,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           return { content: [{ type: "text", text: stdout }] };
         } else if (action === "play") {
           if (id) {
-            const { stdout } = await runBlu(["raw", "/Load", "--param", "service=Tidal", "--param", `id=${id}`]);
-            return { content: [{ type: "text", text: stdout }] };
+            await runBlu(["raw", "/Load", "--param", "service=Tidal", "--param", `id=${id}`]);
+            const { stdout } = await runBlu(["play"]); // Trigger playback to switch input
+            return { content: [{ type: "text", text: "Tidal content loaded and playback started." }] };
           } else if (query) {
             // Very simple search-and-play-first-result
             const { stdout } = await runBlu(["browse", "--key", "Tidal:Search", "--q", query]);
@@ -261,13 +262,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-async function main() {
+export async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Blu MCP Server running on stdio");
 }
 
-main().catch((error) => {
-  console.error("Fatal error in main():", error);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== "test") {
+  main().catch((error) => {
+    console.error("Fatal error in main():", error);
+    process.exit(1);
+  });
+}

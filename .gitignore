@@ -2,3 +2,4 @@ node_modules
 dist
 .env
 .DS_Store
+claude_desktop_config.json.tmp
